@@ -38,8 +38,6 @@ sub start_authentication {
 
     return if $self->consumer_key && $self->access_token;
 
-    $redirect_uri ||= 'https://getpocket.com/';
-
     my $response = $self->_request(
         $self->base_uri . 'oauth/request',
         {
