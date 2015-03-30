@@ -4,6 +4,7 @@ use Moose;
 use Getopt::Long 'GetOptionsFromArray';
 use JSON::PP;
 use Path::Class;
+use URI;
 
 use WWW::Pocket;
 
@@ -200,6 +201,79 @@ sub add {
         title => $title,
     );
     print "Page Saved!\n";
+}
+
+sub archive {
+    my $self = shift;
+    my ($url) = @_;
+
+    $self->_modify('archive', $self->_get_id_for_url($url));
+    print "Page archived!\n";
+}
+
+sub readd {
+    my $self = shift;
+    my ($url) = @_;
+
+    $self->_modify('readd', $self->_get_id_for_url($url));
+    print "Page added!\n";
+}
+
+sub favorite {
+    my $self = shift;
+    my ($url) = @_;
+
+    $self->_modify('favorite', $self->_get_id_for_url($url));
+    print "Page favorited!\n";
+}
+
+sub unfavorite {
+    my $self = shift;
+    my ($url) = @_;
+
+    $self->_modify('unfavorite', $self->_get_id_for_url($url));
+    print "Page unfavorited!\n";
+}
+
+sub delete {
+    my $self = shift;
+    my ($url) = @_;
+
+    $self->_modify('delete', $self->_get_id_for_url($url));
+    print "Page deleted!\n";
+}
+
+sub _modify {
+    my $self = shift;
+    my ($action, $id) = @_;
+
+    $self->pocket->modify(
+        actions => [
+            {
+                action  => $action,
+                item_id => $id,
+            },
+        ],
+    );
+}
+
+sub _get_id_for_url {
+    my $self = shift;
+    my ($url) = @_;
+
+    my $response = $self->pocket->retrieve(
+        domain => URI->new($url)->host,
+    );
+    my $list = $response->{list};
+    return unless ref($list) && ref($list) eq 'HASH';
+
+    for my $item (values %$list) {
+        return $item->{item_id}
+            if $item->{resolved_url} eq $url
+            || $item->{given_url} eq $url;
+    }
+
+    return;
 }
 
 sub _apply_credentials {
