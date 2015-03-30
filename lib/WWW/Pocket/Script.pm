@@ -103,6 +103,8 @@ sub _parse_retrieve_options {
     return (
         {
             ($archive ? (state => $archive) : ()),
+            sort => 'oldest',
+            detailType => 'simple',
         },
         [ @argv ],
     );
@@ -119,7 +121,7 @@ sub _retrieve_urls {
     return map {
         $_->{resolved_url}
     } sort {
-        $b->{sort_id} <=> $a->{sort_id}
+        $a->{sort_id} <=> $b->{sort_id}
     } values %{ $response->{list} };
 }
 
