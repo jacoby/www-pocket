@@ -67,8 +67,12 @@ sub list {
     my @argv = @_;
 
     my ($params) = $self->_parse_retrieve_options(@argv);
+    my %params = (
+        $self->_default_search_params,
+        %$params,
+    );
 
-    print "$_\n" for $self->_retrieve_urls(%$params);
+    print "$_\n" for $self->_retrieve_urls(%params);
 }
 
 sub search {
@@ -77,36 +81,98 @@ sub search {
 
     my ($params, $extra_argv) = $self->_parse_retrieve_options(@argv);
     my ($search) = @$extra_argv;
+    my %params = (
+        $self->_default_search_params,
+        %$params,
+        search => $search,
+    );
 
-    print "$_\n" for $self->_retrieve_urls(%$params, search => $search);
+    print "$_\n" for $self->_retrieve_urls(%params);
+}
+
+sub favorites {
+    my $self = shift;
+    my @argv = @_;
+
+    my ($params) = $self->_parse_retrieve_options(@argv);
+    my %params = (
+        $self->_default_search_params,
+        state => 'all',
+        %$params,
+        favorite => 1,
+    );
+
+    print "$_\n" for $self->_retrieve_urls(%params);
 }
 
 sub retrieve_raw {
     my $self = shift;
     my @argv = @_;
 
-    my ($params) = $self->_parse_retrieve_options(@argv);
+    my ($state, $favorite, $tag, $contentType, $sort, $detailType);
+    my ($search, $domain, $since, $count, $offset);
+    GetOptionsFromArray(
+        \@argv,
+        "state=s"       => \$state,
+        "favorite!"     => sub { $favorite = $_[1] ? '1' : '0' },
+        "tag=s"         => \$tag,
+        "contentType=s" => \$contentType,
+        "sort=s"        => \$sort,
+        "detailType=s"  => \$detailType,
+        "search=s"      => \$search,
+        "domain=s"      => \$domain,
+        "since=i"       => \$since,
+        "count=i"       => \$count,
+        "offset=i"      => \$offset,
+    ) or die "???";
 
-    $self->_pretty_print($self->pocket->retrieve(%$params));
+    my %params = (
+        (defined($state)       ? (state       => $state)       : ()),
+        (defined($favorite)    ? (favorite    => $favorite)    : ()),
+        (defined($tag)         ? (tag         => $tag)         : ()),
+        (defined($contentType) ? (contentType => $contentType) : ()),
+        (defined($sort)        ? (sort        => $sort)        : ()),
+        (defined($detailType)  ? (detailType  => $detailType)  : ()),
+        (defined($search)      ? (search      => $search)      : ()),
+        (defined($domain)      ? (domain      => $domain)      : ()),
+        (defined($since)       ? (since       => $since)       : ()),
+        (defined($count)       ? (count       => $count)       : ()),
+        (defined($offset)      ? (offset      => $offset)      : ()),
+    );
+
+    $self->_pretty_print($self->pocket->retrieve(%params));
 }
 
 sub _parse_retrieve_options {
     my $self = shift;
     my @argv = @_;
 
-    my ($archive);
+    my ($unread, $archive, $all, @tags);
     GetOptionsFromArray(
         \@argv,
+        "unread"  => \$unread,
         "archive" => \$archive,
+        "all"     => \$all,
+        "tag=s"   => \@tags,
     ) or die "???";
 
     return (
         {
-            ($archive ? (state => $archive) : ()),
-            sort => 'oldest',
-            detailType => 'simple',
+            ($unread  ? (state => 'unread')         : ()),
+            ($archive ? (state => 'archive')        : ()),
+            ($all     ? (state => 'all')            : ()),
+            (@tags    ? (tag   => join(',', @tags)) : ()),
         },
         [ @argv ],
+    );
+}
+
+sub _default_search_params {
+    my $self = shift;
+
+    return (
+        sort       => 'oldest',
+        detailType => 'simple',
     );
 }
 
