@@ -263,6 +263,7 @@ sub _get_id_for_url {
 
     my $response = $self->pocket->retrieve(
         domain => URI->new($url)->host,
+        state  => 'all',
     );
     my $list = $response->{list};
     return unless ref($list) && ref($list) eq 'HASH';
