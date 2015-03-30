@@ -63,6 +63,52 @@ sub authenticate {
     $self->pocket;
 }
 
+sub _apply_credentials {
+    my $self = shift;
+    my ($file) = @_;
+
+    my ($consumer_key, $access_token, $username) = $file->slurp(chomp => 1);
+    return WWW::Pocket->new(
+        consumer_key => $consumer_key,
+        access_token => $access_token,
+        username     => $username,
+    );
+}
+
+sub _authenticate {
+    my $self = shift;
+
+    my $consumer_key = $self->_has_consumer_key
+        ? $self->consumer_key
+        : $self->_prompt_for_consumer_key;
+
+    my $pocket = WWW::Pocket->new(consumer_key => $consumer_key);
+
+    my $redirect_uri = $self->redirect_uri;
+    my $code = $pocket->start_authentication($redirect_uri);
+
+    print "Visit https://getpocket.com/auth/authorize?request_token=${code}&redirect_uri=${redirect_uri} and log in. When you're done, press enter to continue.\n";
+    <STDIN>;
+
+    $pocket->finish_authentication($code);
+
+    my $fh = file($self->credentials_file)->openw;
+    $fh->write($pocket->consumer_key . "\n");
+    $fh->write($pocket->access_token . "\n");
+    $fh->write($pocket->username . "\n");
+    $fh->close;
+
+    return $pocket;
+}
+
+sub _prompt_for_consumer_key {
+    my $self = shift;
+
+    print "Enter your consumer key: ";
+    chomp(my $key = <STDIN>);
+    return $key;
+}
+
 sub list {
     my $self = shift;
     my @argv = @_;
@@ -192,6 +238,13 @@ sub _retrieve_urls {
     } values %{ $response->{list} };
 }
 
+sub _pretty_print {
+    my $self = shift;
+    my ($data) = @_;
+
+    print JSON::PP->new->utf8->pretty->canonical->encode($data), "\n";
+}
+
 sub add {
     my $self = shift;
     my ($url, $title) = @_;
@@ -275,59 +328,6 @@ sub _get_id_for_url {
     }
 
     return;
-}
-
-sub _apply_credentials {
-    my $self = shift;
-    my ($file) = @_;
-
-    my ($consumer_key, $access_token, $username) = $file->slurp(chomp => 1);
-    return WWW::Pocket->new(
-        consumer_key => $consumer_key,
-        access_token => $access_token,
-        username     => $username,
-    );
-}
-
-sub _authenticate {
-    my $self = shift;
-
-    my $consumer_key = $self->_has_consumer_key
-        ? $self->consumer_key
-        : $self->_prompt_for_consumer_key;
-
-    my $pocket = WWW::Pocket->new(consumer_key => $consumer_key);
-
-    my $redirect_uri = $self->redirect_uri;
-    my $code = $pocket->start_authentication($redirect_uri);
-
-    print "Visit https://getpocket.com/auth/authorize?request_token=${code}&redirect_uri=${redirect_uri} and log in. When you're done, press enter to continue.\n";
-    <STDIN>;
-
-    $pocket->finish_authentication($code);
-
-    my $fh = file($self->credentials_file)->openw;
-    $fh->write($pocket->consumer_key . "\n");
-    $fh->write($pocket->access_token . "\n");
-    $fh->write($pocket->username . "\n");
-    $fh->close;
-
-    return $pocket;
-}
-
-sub _prompt_for_consumer_key {
-    my $self = shift;
-
-    print "Enter your consumer key: ";
-    chomp(my $key = <STDIN>);
-    return $key;
-}
-
-sub _pretty_print {
-    my $self = shift;
-    my ($data) = @_;
-
-    print JSON::PP->new->utf8->pretty->canonical->encode($data), "\n";
 }
 
 __PACKAGE__->meta->make_immutable;
