@@ -9,10 +9,11 @@ use Path::Class;
 use WWW::Pocket;
 
 has consumer_key => (
-    is      => 'ro',
-    isa     => 'Str',
-    lazy    => 1,
-    default => sub { die "consumer_key is required to authenticate" },
+    is        => 'ro',
+    isa       => 'Str',
+    lazy      => 1,
+    default   => sub { die "consumer_key is required to authenticate" },
+    predicate => '_has_consumer_key',
 );
 
 has redirect_uri => (
@@ -35,16 +36,13 @@ has pocket => (
     default => sub {
         my $self = shift;
 
-        my $pocket = WWW::Pocket->new;
         my $credentials_file = file($self->credentials_file);
         if (-e $credentials_file) {
-            $self->_apply_credentials($pocket, $credentials_file);
+            return $self->_apply_credentials($credentials_file);
         }
         else {
-            $self->_authenticate($pocket);
+            return $self->_authenticate;
         }
-
-        $pocket
     },
 );
 
@@ -89,32 +87,48 @@ sub retrieve {
 
 sub _apply_credentials {
     my $self = shift;
-    my ($pocket, $file) = @_;
+    my ($file) = @_;
 
     my ($consumer_key, $access_token, $username) = $file->slurp(chomp => 1);
-    $pocket->consumer_key($consumer_key);
-    $pocket->access_token($access_token);
-    $pocket->username($username);
+    return WWW::Pocket->new(
+        consumer_key => $consumer_key,
+        access_token => $access_token,
+        username     => $username,
+    );
 }
 
 sub _authenticate {
     my $self = shift;
-    my ($pocket) = @_;
 
-    my $consumer_key = $self->consumer_key;
+    my $consumer_key = $self->_has_consumer_key
+        ? $self->consumer_key
+        : $self->_prompt_for_consumer_key;
+
+    my $pocket = WWW::Pocket->new(consumer_key => $consumer_key);
+
     my $redirect_uri = $self->redirect_uri;
-    my $code = $pocket->start_authentication($consumer_key, $redirect_uri);
+    my $code = $pocket->start_authentication($redirect_uri);
 
     print "Visit https://getpocket.com/auth/authorize?request_token=${code}&redirect_uri=${redirect_uri} and log in. When you're done, press enter to continue.\n";
     <STDIN>;
 
-    $pocket->finish_authentication($consumer_key, $code);
+    $pocket->finish_authentication($code);
 
     my $fh = file($self->credentials_file)->openw;
     $fh->write($pocket->consumer_key . "\n");
     $fh->write($pocket->access_token . "\n");
     $fh->write($pocket->username . "\n");
     $fh->close;
+
+    return $pocket;
+}
+
+sub _prompt_for_consumer_key {
+    my $self = shift;
+
+    print "Enter your consumer key: ";
+    chomp(my $key = <STDIN>);
+    return $key;
 }
 
 sub _pretty_print {

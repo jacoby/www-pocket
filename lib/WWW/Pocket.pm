@@ -5,18 +5,25 @@ use HTTP::Tiny;
 use JSON::PP;
 
 has consumer_key => (
-    is  => 'rw',
-    isa => 'Str',
+    is       => 'ro',
+    isa      => 'Str',
+    required => 1,
 );
 
 has access_token => (
-    is  => 'rw',
-    isa => 'Str',
+    is        => 'ro',
+    isa       => 'Str',
+    lazy      => 1,
+    default   => sub { die "You must authenticate first." },
+    predicate => 'has_access_token',
+    writer    => '_set_access_token',
 );
 
 has username => (
-    is  => 'rw',
-    isa => 'Str',
+    is        => 'ro',
+    isa       => 'Str',
+    predicate => 'has_username',
+    writer    => '_set_username',
 );
 
 has base_uri => (
@@ -34,14 +41,14 @@ has ua => (
 
 sub start_authentication {
     my $self = shift;
-    my ($consumer_key, $redirect_uri) = @_;
+    my ($redirect_uri) = @_;
 
-    return if $self->consumer_key && $self->access_token;
+    return if $self->has_access_token;
 
     my $response = $self->_request(
         $self->base_uri . 'oauth/request',
         {
-            consumer_key => $consumer_key,
+            consumer_key => $self->consumer_key,
             redirect_uri => $redirect_uri,
         },
     );
@@ -50,19 +57,18 @@ sub start_authentication {
 
 sub finish_authentication {
     my $self = shift;
-    my ($consumer_key, $code) = @_;
+    my ($code) = @_;
 
     my $response = $self->_request(
         $self->base_uri . 'oauth/authorize',
         {
-            consumer_key => $consumer_key,
+            consumer_key => $self->consumer_key,
             code         => $code,
         },
     );
 
-    $self->consumer_key($consumer_key);
-    $self->access_token($response->{access_token});
-    $self->username($response->{username});
+    $self->_set_access_token($response->{access_token});
+    $self->_set_username($response->{username});
 }
 
 sub add {
