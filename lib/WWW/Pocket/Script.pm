@@ -50,12 +50,25 @@ sub run {
     my @argv = @_;
 
     my $method = shift @argv;
-    if ($self->can($method)) {
+    if ($self->_method_is_command($method)) {
         return $self->$method(@argv);
     }
     else {
         die "insert usage here";
     }
+}
+
+sub _method_is_command {
+    my $self = shift;
+    my ($name) = @_;
+
+    return if $name eq 'run' || $name eq 'meta';
+    return if $name =~ /^_/;
+    my $method = $self->meta->find_method_by_name($name);
+    return unless $method;
+    return if $method->isa('Class::MOP::Method::Accessor');
+
+    return 1;
 }
 
 sub authenticate {
