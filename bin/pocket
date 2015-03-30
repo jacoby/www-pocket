@@ -3,4 +3,4 @@ use strict;
 use warnings;
 
 use WWW::Pocket::Script;
-WWW::Pocket::Script->new_with_options->run;
+WWW::Pocket::Script->new->run(@ARGV);

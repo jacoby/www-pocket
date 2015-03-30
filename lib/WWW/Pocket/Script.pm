@@ -1,8 +1,7 @@
 package WWW::Pocket::Script;
 use Moose;
 
-with 'MooseX::Getopt';
-
+use Getopt::Long 'GetOptionsFromArray';
 use JSON::PP;
 use Path::Class;
 
@@ -29,7 +28,6 @@ has credentials_file => (
 );
 
 has pocket => (
-    traits  => ['NoGetopt'],
     is      => 'ro',
     isa     => 'WWW::Pocket',
     lazy    => 1,
@@ -48,14 +46,14 @@ has pocket => (
 
 sub run {
     my $self = shift;
-    my @args = @{ $self->extra_argv };
+    my @argv = @_;
 
-    my $method = shift @args;
+    my $method = shift @argv;
     if ($self->can($method)) {
-        return $self->$method(@args);
+        return $self->$method(@argv);
     }
     else {
-        $self->print_usage_text($self->usage);
+        die "insert usage here";
     }
 }
 
@@ -64,25 +62,76 @@ sub authenticate {
     $self->pocket;
 }
 
+sub list {
+    my $self = shift;
+    my @argv = @_;
+
+    my ($params) = $self->_parse_retrieve_options(@argv);
+
+    print "$_\n" for $self->_retrieve_urls(%$params);
+}
+
+sub search {
+    my $self = shift;
+    my @argv = @_;
+
+    my ($params, $extra_argv) = $self->_parse_retrieve_options(@argv);
+    my ($search) = @$extra_argv;
+
+    print "$_\n" for $self->_retrieve_urls(%$params, search => $search);
+}
+
+sub retrieve_raw {
+    my $self = shift;
+    my @argv = @_;
+
+    my ($params) = $self->_parse_retrieve_options(@argv);
+
+    $self->_pretty_print($self->pocket->retrieve(%$params));
+}
+
+sub _parse_retrieve_options {
+    my $self = shift;
+    my @argv = @_;
+
+    my ($archive);
+    GetOptionsFromArray(
+        \@argv,
+        "archive" => \$archive,
+    ) or die "???";
+
+    return (
+        {
+            ($archive ? (state => $archive) : ()),
+        },
+        [ @argv ],
+    );
+}
+
+sub _retrieve_urls {
+    my $self = shift;
+    my %params = @_;
+
+    my $response = $self->pocket->retrieve(%params);
+    my $list = $response->{list};
+    return unless ref($list) && ref($list) eq 'HASH';
+
+    return map {
+        $_->{resolved_url}
+    } sort {
+        $b->{sort_id} <=> $a->{sort_id}
+    } values %{ $response->{list} };
+}
+
 sub add {
     my $self = shift;
-    my @args = @_;
+    my ($url, $title) = @_;
 
-    $self->_pretty_print($self->pocket->add(@args));
-}
-
-sub modify {
-    my $self = shift;
-    my @args = @_;
-
-    $self->_pretty_print($self->pocket->modify(@args));
-}
-
-sub retrieve {
-    my $self = shift;
-    my @args = @_;
-
-    $self->_pretty_print($self->pocket->retrieve(@args));
+    $self->pocket->add(
+        url   => $url,
+        title => $title,
+    );
+    print "Page Saved!\n";
 }
 
 sub _apply_credentials {
