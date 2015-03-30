@@ -207,7 +207,7 @@ sub archive {
     my $self = shift;
     my ($url) = @_;
 
-    $self->_modify('archive', $self->_get_id_for_url($url));
+    $self->_modify('archive', $url);
     print "Page archived!\n";
 }
 
@@ -215,7 +215,7 @@ sub readd {
     my $self = shift;
     my ($url) = @_;
 
-    $self->_modify('readd', $self->_get_id_for_url($url));
+    $self->_modify('readd', $url);
     print "Page added!\n";
 }
 
@@ -223,7 +223,7 @@ sub favorite {
     my $self = shift;
     my ($url) = @_;
 
-    $self->_modify('favorite', $self->_get_id_for_url($url));
+    $self->_modify('favorite', $url);
     print "Page favorited!\n";
 }
 
@@ -231,7 +231,7 @@ sub unfavorite {
     my $self = shift;
     my ($url) = @_;
 
-    $self->_modify('unfavorite', $self->_get_id_for_url($url));
+    $self->_modify('unfavorite', $url);
     print "Page unfavorited!\n";
 }
 
@@ -239,19 +239,19 @@ sub delete {
     my $self = shift;
     my ($url) = @_;
 
-    $self->_modify('delete', $self->_get_id_for_url($url));
+    $self->_modify('delete', $url);
     print "Page deleted!\n";
 }
 
 sub _modify {
     my $self = shift;
-    my ($action, $id) = @_;
+    my ($action, $url) = @_;
 
     $self->pocket->modify(
         actions => [
             {
                 action  => $action,
-                item_id => $id,
+                item_id => $self->_get_id_for_url($url),
             },
         ],
     );
