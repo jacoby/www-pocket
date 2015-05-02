@@ -3,6 +3,7 @@ use Moose;
 
 use Getopt::Long 'GetOptionsFromArray';
 use JSON::PP;
+use List::Util 'sum';
 use Path::Class;
 use URI;
 
@@ -135,6 +136,20 @@ sub list {
     print "$_\n" for $self->_retrieve_urls(%params);
 }
 
+sub words {
+    my $self = shift;
+    my @argv = @_;
+
+    my ($params) = $self->_parse_retrieve_options(@argv);
+    my %params = (
+        $self->_default_search_params,
+        %$params,
+    );
+
+    my $word_count = sum($self->_retrieve_field('word_count', %params)) || 0;
+    print "$word_count\n";
+}
+
 sub search {
     my $self = shift;
     my @argv = @_;
@@ -240,12 +255,19 @@ sub _retrieve_urls {
     my $self = shift;
     my %params = @_;
 
+    $self->_retrieve_field('resolved_url', %params);
+}
+
+sub _retrieve_field {
+    my $self = shift;
+    my ($field, %params) = @_;
+
     my $response = $self->pocket->retrieve(%params);
     my $list = $response->{list};
     return unless ref($list) && ref($list) eq 'HASH';
 
     return map {
-        $_->{resolved_url}
+        $_->{$field}
     } sort {
         $a->{sort_id} <=> $b->{sort_id}
     } values %{ $response->{list} };
