@@ -69,6 +69,8 @@ sub finish_authentication {
 
     $self->_set_access_token($response->{access_token});
     $self->_set_username($response->{username});
+
+    return;
 }
 
 sub add {
