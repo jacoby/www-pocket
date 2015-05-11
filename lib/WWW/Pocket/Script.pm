@@ -386,4 +386,6 @@ no Moose;
 
 =end Pod::Coverage
 
+=cut
+
 1;
