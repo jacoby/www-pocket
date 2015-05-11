@@ -99,9 +99,9 @@ sub _authenticate {
     my $pocket = WWW::Pocket->new(consumer_key => $consumer_key);
 
     my $redirect_uri = $self->redirect_uri;
-    my $code = $pocket->start_authentication($redirect_uri);
+    my ($url, $code) = $pocket->start_authentication($redirect_uri);
 
-    print "Visit https://getpocket.com/auth/authorize?request_token=${code}&redirect_uri=${redirect_uri} and log in. When you're done, press enter to continue.\n";
+    print "Visit $url and log in. When you're done, press enter to continue.\n";
     <STDIN>;
 
     $pocket->finish_authentication($code);

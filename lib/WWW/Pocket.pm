@@ -29,7 +29,29 @@ has username => (
 has base_uri => (
     is      => 'ro',
     isa     => 'Str',
-    default => 'https://getpocket.com/v3/',
+    default => 'https://getpocket.com/',
+);
+
+has api_base_uri => (
+    is      => 'ro',
+    isa     => 'Str',
+    lazy    => 1,
+    default => sub {
+        my $base = $_[0]->base_uri;
+        $base =~ s{/$}{};
+        return "$base/v3/"
+    },
+);
+
+has auth_base_uri => (
+    is      => 'ro',
+    isa     => 'Str',
+    lazy    => 1,
+    default => sub {
+        my $base = $_[0]->base_uri;
+        $base =~ s{/$}{};
+        return "$base/auth/"
+    },
 );
 
 has ua => (
@@ -46,13 +68,16 @@ sub start_authentication {
     return if $self->has_access_token;
 
     my $response = $self->_request(
-        $self->base_uri . 'oauth/request',
+        $self->api_base_uri . 'oauth/request',
         {
             consumer_key => $self->consumer_key,
             redirect_uri => $redirect_uri,
         },
     );
-    return $response->{code};
+    return (
+        $self->auth_base_uri . "authorize?request_token=$response->{code}&redirect_uri=$redirect_uri",
+        $response->{code},
+    );
 }
 
 sub finish_authentication {
@@ -60,7 +85,7 @@ sub finish_authentication {
     my ($code) = @_;
 
     my $response = $self->_request(
-        $self->base_uri . 'oauth/authorize',
+        $self->api_base_uri . 'oauth/authorize',
         {
             consumer_key => $self->consumer_key,
             code         => $code,
@@ -96,7 +121,7 @@ sub _endpoint_request {
     my ($endpoint, $params) = @_;
     $params->{consumer_key} = $self->consumer_key;
     $params->{access_token} = $self->access_token;
-    return $self->_request($self->base_uri . $endpoint, $params);
+    return $self->_request($self->api_base_uri . $endpoint, $params);
 }
 
 sub _request {
