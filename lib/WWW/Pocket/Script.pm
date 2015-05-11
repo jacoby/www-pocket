@@ -368,4 +368,22 @@ sub _get_id_for_url {
 __PACKAGE__->meta->make_immutable;
 no Moose;
 
+=begin Pod::Coverage
+
+  add
+  archive
+  authenticate
+  delete
+  favorite
+  favorites
+  list
+  readd
+  retrieve_raw
+  run
+  search
+  unfavorite
+  words
+
+=end Pod::Coverage
+
 1;
