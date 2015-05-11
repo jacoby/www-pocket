@@ -270,7 +270,7 @@ sub _retrieve_field {
         $_->{$field}
     } sort {
         $a->{sort_id} <=> $b->{sort_id}
-    } values %{ $response->{list} };
+    } values %$list;
 }
 
 sub _pretty_print {
