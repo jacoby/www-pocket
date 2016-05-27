@@ -6,6 +6,7 @@ use JSON::PP;
 use List::Util 'sum';
 use Path::Class;
 use URI;
+use Pod::Usage;
 
 use WWW::Pocket;
 
@@ -55,7 +56,7 @@ sub run {
         return $self->$method(@argv);
     }
     else {
-        die "insert usage here";
+        pod2usage(-verbose => 2);
     }
 }
 
@@ -63,6 +64,7 @@ sub _method_is_command {
     my $self = shift;
     my ($name) = @_;
 
+    return unless $name;
     return if $name eq 'run' || $name eq 'meta';
     return if $name =~ /^_/;
     my $method = $self->meta->find_method_by_name($name);
@@ -70,6 +72,12 @@ sub _method_is_command {
     return if $method->isa('Class::MOP::Method::Accessor');
 
     return 1;
+}
+
+# Display help about this script.
+sub help {
+    my $self = shift;
+    pod2usage(-verbose => 1);
 }
 
 sub authenticate {
