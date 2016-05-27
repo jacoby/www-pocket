@@ -3,7 +3,9 @@ use Moose;
 # ABSTRACT: Wrapper for the Pocket v3 API
 
 use HTTP::Tiny;
+use IO::Socket::SSL; # Necessary for https URLs on HTTP::Tiny.
 use JSON::PP;
+use Carp;
 
 =head1 SYNOPSIS
 
@@ -263,7 +265,7 @@ sub _request {
             },
         },
     );
-    die "Request for $uri failed ($response->{status}): $response->{reason}"
+    croak "Request for $uri failed ($response->{status}): $response->{content}"
         unless $response->{success};
 
     return decode_json($response->{content});
