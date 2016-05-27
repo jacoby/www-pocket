@@ -4,7 +4,31 @@ use warnings;
 # PODNAME: pocket
 # ABSTRACT: interact with the Pocket API from the command line
 
+=head1 NAME
+
+pocket - A command-line tool for Pocket (http://www.getpocket.com/)
+
 =head1 SYNOPSIS
+
+pocket [command] [options ...]
+
+Commands:
+
+ help               Displays this synopsis.
+ man                Displays full documentation.
+ list               Print all unread URLs in your account.
+ search <string>    Print all URLs whose title or URL contains C<string>.
+ favorites          Print all unread, favorite URLs.
+ add <url [title]>  Add URL, optionally with title.
+ archive <url>      Archive URL.
+ readd <url>        Unread/unarchive URL.
+ favorite <url>     Favorite URL.
+ delete <url>       Delete URL.
+ words              Print the number of words in all unread articles.
+ authenticate       Authenticate and store credentials in C<~/.pocket>.
+                    (all commands will do this automatically)
+
+Example usage:
 
   $ pocket list
   Enter your consumer key: ...
@@ -13,6 +37,7 @@ use warnings;
   http://the-toast.net/2015/04/27/looking-back-fragments-from-womens-shelters-1981-1996/view-all/
   https://modelviewculture.com/pieces/dreaming-holding-onto-the-hope-of-justice-in-technology-and-america
   [...]
+
   $ pocket words --archive
   2233913
 

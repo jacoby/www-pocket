@@ -74,11 +74,19 @@ sub _method_is_command {
     return 1;
 }
 
-# Display help about this script.
+# Display quick usage help on this script.
 sub help {
     my $self = shift;
     pod2usage(-verbose => 1);
 }
+
+# Display comprehensive help about this script.
+sub man {
+    my $self = shift;
+    pod2usage(-verbose => 2);
+}
+
+
 
 sub authenticate {
     my $self = shift;
