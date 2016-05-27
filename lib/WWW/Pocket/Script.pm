@@ -134,8 +134,16 @@ sub _authenticate {
 sub _prompt_for_consumer_key {
     my $self = shift;
 
+    print "Consumer key required. You can sign up for a consumer key as a\n" .
+        "Pocket developer at https://getpocket.com/developer/apps/new.\n";
+
     print "Enter your consumer key: ";
-    chomp(my $key = <STDIN>);
+    my $key = <STDIN>;
+
+    # Trim start and end.
+    $key =~ s/^\s*(.*)\s*$/$1/;
+    # print "Key entered: '$key'\n";
+
     return $key;
 }
 
