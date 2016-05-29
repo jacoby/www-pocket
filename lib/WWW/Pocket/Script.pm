@@ -400,7 +400,9 @@ no Moose;
   delete
   favorite
   favorites
+  help
   list
+  man
   readd
   retrieve_raw
   run
