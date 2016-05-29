@@ -6,6 +6,7 @@ use JSON::PP;
 use List::Util 'sum';
 use Path::Class;
 use URI;
+use Pod::Usage;
 
 use WWW::Pocket;
 
@@ -55,7 +56,7 @@ sub run {
         return $self->$method(@argv);
     }
     else {
-        die "insert usage here";
+        pod2usage(-verbose => 2);
     }
 }
 
@@ -63,6 +64,7 @@ sub _method_is_command {
     my $self = shift;
     my ($name) = @_;
 
+    return unless $name;
     return if $name eq 'run' || $name eq 'meta';
     return if $name =~ /^_/;
     my $method = $self->meta->find_method_by_name($name);
@@ -71,6 +73,20 @@ sub _method_is_command {
 
     return 1;
 }
+
+# Display quick usage help on this script.
+sub help {
+    my $self = shift;
+    pod2usage(-verbose => 1);
+}
+
+# Display comprehensive help about this script.
+sub man {
+    my $self = shift;
+    pod2usage(-verbose => 2);
+}
+
+
 
 sub authenticate {
     my $self = shift;
@@ -118,8 +134,16 @@ sub _authenticate {
 sub _prompt_for_consumer_key {
     my $self = shift;
 
+    print "Consumer key required. You can sign up for a consumer key as a\n" .
+        "Pocket developer at https://getpocket.com/developer/apps/new.\n";
+
     print "Enter your consumer key: ";
-    chomp(my $key = <STDIN>);
+    my $key = <STDIN>;
+
+    # Trim start and end.
+    $key =~ s/^\s*(.*)\s*$/$1/;
+    # print "Key entered: '$key'\n";
+
     return $key;
 }
 
