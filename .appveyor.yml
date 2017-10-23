@@ -7,9 +7,7 @@ install:
   - cd %APPVEYOR_BUILD_FOLDER%
   - cpanm --quiet --installdeps --with-develop --notest .
 
-build_script:
-  - perl Makefile.PL
-  - gmake
+build: off
 
 test_script:
-  - gmake test
+  - prove -l
